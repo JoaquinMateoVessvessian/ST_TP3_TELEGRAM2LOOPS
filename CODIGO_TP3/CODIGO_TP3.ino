@@ -17,7 +17,7 @@ TaskHandle_t Task2;
 #include <Adafruit_Sensor.h>
 WiFiServer server(80);
 U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/U8X8_PIN_NONE);
-int Maquina_De_Estados(int EstadoBoton1, int EstadoBoton2, float TemperaturaActual);
+void Maquina_De_Estados(int EstadoBoton1, int EstadoBoton2, float TemperaturaActual);
 
 #define DHTPIN 23
 #define DHTTYPE DHT11
@@ -62,10 +62,10 @@ UniversalTelegramBot bot(BOT_TOKEN, secured_client);
 unsigned long bot_lasttime;  // last time messages' scan has been done
 bool Start = false;
 void handleNewMessages(int numNewMessages) {
-  float t = dht.readTemperature();
+  float t = dht.readTemperature(); //LEO LA TEMPERATURA 
   Serial.println("handleNewMessages");
   Serial.println(String(numNewMessages));
-  for (int i = 0; i < numNewMessages; i++) {
+  for (int i = 0; i < numNewMessages; i++) { 
     String chat_id = bot.messages[i].chat_id;
     String text = bot.messages[i].text;
     Serial.println(text);
@@ -80,9 +80,9 @@ void handleNewMessages(int numNewMessages) {
       bot.sendMessage(chat_id, welcome);
     }
     if (text == "/t") {
-      char st[20];
-      sprintf(st, "Temperatura: %.2f", t);
-      bot.sendMessage(chat_id, st);
+      char st[20]; //caratacteres que tiene st 
+      sprintf(st, "Temperatura: %.2f", t); //paso a t(float) a una variable string de 20 caracteres,
+      bot.sendMessage(chat_id, st); // envio el mensaje
     }
   }
 }
@@ -123,22 +123,22 @@ void Task1code(void *pvParameters) {
   Serial.print("Task1 running on core ");
   Serial.println(xPortGetCoreID());
   for (;;) {
-    t = dht.readTemperature();
-      if (t > umbral && Mensaje == true) {
-        char st[70];
-        sprintf(st, "Se superó el valor umbral y la temperatura actual es %.2f °C", t);
+    t = dht.readTemperature(); // guardo en t el valor de la temperatura
+      if (t > umbral && Mensaje == true) { //Si la temperatura es mayor a umbral y el todavia no se habia enviado un mensaje sobre el cambio de temperatura...
+        char st[70]; //le asigno 70 caracteres a st
+        sprintf(st, "Se superó el valor umbral y la temperatura actual es %.2f °C", t); 
         bot.sendMessage(CHAT_ID, st);
-        Mensaje = false;
+        Mensaje = false; //Paso el mensaje a false, esto significa que ya se mando un mensaje
       }
       if (millis() - bot_lasttime > BOT_MTBS) {
-        int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
-        if (numNewMessages > 0) {
-          handleNewMessages(numNewMessages);
+        int numNewMessages = bot.getUpdates(bot.last_message_received + 1); //se guarda la cantidad de mensajes recibidos.
+        if (numNewMessages > 0) { //si se recibio un mensaje por telegram...
+          handleNewMessages(numNewMessages); //se llama a la funcion
           bot_lasttime = millis();
         } 
       }
       if (umbral > t){
-        Mensaje = true;
+        Mensaje = true; //si la temperatura vuelve a ser menor que el umbral, se rehabilita Mensaje para enviar un mensaje cuando se supere el valor umbral.
       }
   }
 }
@@ -148,33 +148,32 @@ void Task2code(void *pvParameters) {
   Serial.print("Task2 running on core ");
   Serial.println(xPortGetCoreID());
   for (;;) {
-    digitalWrite(26, HIGH);
     t = dht.readTemperature();
     boton1 = digitalRead(BOTON1);
     boton2 = digitalRead(BOTON2);
-    umbral = Maquina_De_Estados(boton1, boton2, t);
+    Maquina_De_Estados(boton1, boton2, t);
   }
 }
 
 void loop() {
 }
 
-int Maquina_De_Estados(int EstadoBoton1, int EstadoBoton2, float TemperaturaActual) {
+void Maquina_De_Estados(int EstadoBoton1, int EstadoBoton2, float TemperaturaActual) {
   char stringt[10];
   char stringu[10];
-  tiempoactual = millis();
+  tiempoactual = millis(); //se comienza a contar el tiempo
   switch (estado) {
     case P1:
       sprintf(stringt, "%.2f", TemperaturaActual);
-      sprintf(stringu, "%d", umbral);
-      u8g2.clearBuffer();
+      sprintf(stringu, "%d", umbral); 
+      u8g2.clearBuffer(); //se reinicia la pantalla
       u8g2.setFont(u8g2_font_ncenB08_tr);
       u8g2.drawStr(15, 15, "Temp:");
       u8g2.drawStr(60, 15, stringt);
       u8g2.drawStr(15, 30, "Umbral:");
       u8g2.drawStr(70, 30, stringu);
-      u8g2.sendBuffer();
-      if (TemperaturaActual >= umbral) {
+      u8g2.sendBuffer(); //se "dibuja" sobre la pantalla
+      if (TemperaturaActual >= umbral) { //Si la temperatura es mayor a umbral se prende el LED
         digitalWrite(25, HIGH);
       }
       else {
@@ -187,7 +186,7 @@ int Maquina_De_Estados(int EstadoBoton1, int EstadoBoton2, float TemperaturaActu
     case ESPERA1:
       Serial.println("ESPERA1");
       if (EstadoBoton1 == HIGH) {
-        tiempo = tiempoactual;
+        tiempo = tiempoactual; //guardo el tiempo actual en tiempo antes de hacer el cambio para que cuadno este en el siguiente estado se empiece a contar desde "0" (en teoria)
         estado = PASAJE1;
       }
       break;
@@ -198,7 +197,7 @@ int Maquina_De_Estados(int EstadoBoton1, int EstadoBoton2, float TemperaturaActu
         tiempo = tiempoactual;
         estado = ESPERA2;
       }
-      if (tiempoactual - tiempo >= 5000) {
+      if (tiempoactual - tiempo >= 5000) { //Si pasan 5 segundos y no se presiono el siguiente boton, se vuelve a la pantalla 1
         if (EstadoBoton1 == HIGH) {
           tiempo = tiempoactual;
           estado = P1;
@@ -273,5 +272,4 @@ int Maquina_De_Estados(int EstadoBoton1, int EstadoBoton2, float TemperaturaActu
       }
       break;
   }
-  return umbral;
 }
