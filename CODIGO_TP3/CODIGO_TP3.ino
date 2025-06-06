@@ -125,7 +125,7 @@ void Task1code(void *pvParameters) {
   for (;;) {
     t = dht.readTemperature();
       if (t > umbral && Mensaje == true) {
-        char st[50];
+        char st[70];
         sprintf(st, "Se superó el valor umbral y la temperatura actual es %.2f °C", t);
         bot.sendMessage(CHAT_ID, st);
         Mensaje = false;
@@ -148,7 +148,7 @@ void Task2code(void *pvParameters) {
   Serial.print("Task2 running on core ");
   Serial.println(xPortGetCoreID());
   for (;;) {
-    digitalWrite(25, HIGH);
+    digitalWrite(26, HIGH);
     t = dht.readTemperature();
     boton1 = digitalRead(BOTON1);
     boton2 = digitalRead(BOTON2);
