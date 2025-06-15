@@ -63,7 +63,7 @@ UniversalTelegramBot bot(BOT_TOKEN, secured_client);
 unsigned long bot_lasttime;  // last time messages' scan has been done
 bool Start = false;
 void handleNewMessages(int numNewMessages) {
-  float t = dht.readTemperature(); //LEO LA TEMPERATURA 
+  //t = dht.readTemperature(); //LEO LA TEMPERATURA 
   Serial.println("handleNewMessages");
   Serial.println(String(numNewMessages));
   for (int i = 0; i < numNewMessages; i++) { 
